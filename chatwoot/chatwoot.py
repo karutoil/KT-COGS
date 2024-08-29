@@ -3,7 +3,7 @@ import requests
 from redbot.core import commands, Config
 from redbot.core.bot import Red
 
-class ChatwootCog(commands.Cog):
+class chatwoot(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
@@ -53,4 +53,4 @@ class ChatwootCog(commands.Cog):
             await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
 
 def setup(bot: Red):
-    bot.add_cog(ChatwootCog(bot))
+    bot.add_cog(chatwoot(bot))
