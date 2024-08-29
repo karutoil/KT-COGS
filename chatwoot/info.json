@@ -15,7 +15,9 @@ are added here for convenience, but they're not part of cookiecutter template.
     {% endif -%}
     "author": {{ authors | map('trim') | list | jsonify | indent }},
     "required_cogs": {},
-    "requirements": [],
+    "requirements": [
+        "requests"
+    ],
     "tags": {{ tags | jsonify | indent }},
     "min_bot_version": "3.5.0",
     "hidden": false,
