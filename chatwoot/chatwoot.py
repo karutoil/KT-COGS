@@ -17,10 +17,17 @@ class chatwoot(commands.Cog):
         await ctx.send("Chatwoot credentials set.")
 
     @commands.command()
+    async def set_chatwoot_credentials(self, ctx, chatwoot_url: str):
+        """Set Chatwoot URL."""
+        await self.config.chatwoot_url.set(chatwoot_url)
+        await ctx.send("Chatwoot URL set.")
+
+    @commands.command()
     async def check_new_chats(self, ctx):
         """Check for new chats on Chatwoot and create a channel called 'test'."""
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
+        chatwoot_url = await self.config.chatwoot_url()
         
         if not api_key or not account_id:
             await ctx.send("Chatwoot credentials are not set.")
@@ -32,7 +39,7 @@ class chatwoot(commands.Cog):
         }
 
         response = requests.get(
-            f"https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations",
+            f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
 
