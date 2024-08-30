@@ -77,7 +77,7 @@ class chatwoot(commands.Cog):
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_base_url()
+        base_url = await self.config.chatwoot_url()
 
         await ctx.send(f"Testing Chatwoot with base URL: {base_url}")
 
