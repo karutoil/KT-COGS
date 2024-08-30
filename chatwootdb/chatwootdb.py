@@ -42,17 +42,22 @@ class chatwootdb(commands.Cog):
     async def check_db(self):
         for guild_id, pool in self.pools.items():
             async with pool.acquire() as connection:
-                query = "SELECT * FROM public.conversations WHERE new_data = TRUE;"  # Adjust query as needed
+                query = "SELECT id FROM public.conversations WHERE new_data = TRUE;"  # Adjust query as needed
                 result = await connection.fetch(query)
                 
                 if result:
-                    # Handle new data (e.g., sending messages to a channel)
-                    for record in result:
-                        # Example: sending to a specific channel (replace channel_id with actual ID)
-                        channel = self.bot.get_channel(channel_id)
-                        await channel.send(f"New conversation: {record}")
-                        # Mark data as processed (adjust the query as needed)
-                        await connection.execute("UPDATE public.conversations SET new_data = FALSE WHERE id = $1", record['id'])
+                    guild = self.bot.get_guild(guild_id)
+                    if guild:
+                        for record in result:
+                            channel_name = f"Chat - {record['id']}"
+                            # Check if the channel already exists
+                            existing_channel = discord.utils.get(guild.text_channels, name=channel_name)
+                            if not existing_channel:
+                                # Create the text channel
+                                new_channel = await guild.create_text_channel(channel_name)
+                                await new_channel.send(f"New conversation started with ID: {record['id']}")
+                            # Mark data as processed (adjust the query as needed)
+                            await connection.execute("UPDATE public.conversations SET new_data = FALSE WHERE id = $1", record['id'])
 
     @commands.group(name='db')
     @commands.guild_only()
