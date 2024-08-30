@@ -78,7 +78,7 @@ class chatwoot(commands.Cog):
         api_key = await self.config.chatwoot_api_key()
         base_url = await self.config.chatwoot_url()
         asyncchatwoot = AsyncChatwoot(api_key, base_url)
-        conversations = await asyncchatwoot.conversations.list(account_id=1)
+        conversations = asyncchatwoot.conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
 
 def setup(bot):
