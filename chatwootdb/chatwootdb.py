@@ -1,7 +1,7 @@
 import asyncpg
 from redbot.core import commands, Config
 from redbot.core.i18n import Translator
-import asyncio
+from discord.ext import tasks
 
 _ = Translator("chatwootdb", __file__)
 
@@ -17,79 +17,14 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
-        async def _query_every_15_seconds():
-            while True:
-                try:
-                    await self.query_table()
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                await asyncio.sleep(900)  # Sleep for 15 minutes
-
-        self._query_task = None
-        self.loop = asyncio.get_event_loop()
-        
-        if not hasattr(self, '_query_task'):
-            self._query_task = self.loop.create_task(_query_every_15_seconds())
 
     async def cog_load(self):
-        super().cog_load()
-        if not hasattr(self, '_query_task'):
-            loop = asyncio.get_event_loop()
-            self._query_task = loop.create_task(self.query_every_15_seconds())
-            
+        self.check_db.start()  # Start the task when the cog loads
+
     async def cog_unload(self):
-        await self._query_task
-        self.pools.clear()
-        delattr(self, '_query_task')  # Clearing the task to avoid circular reference when garbage collecting
-
-    async def get_channel_id(self, guild) -> str:
-        pool = await self.get_pool(guild.id)
-        try: 
-            query = "SELECT id FROM public.conversations ORDER BY id DESC LIMIT 1"
-            async with pool.acquire() as conn:
-                results = await conn.fetch(query)
-
-            if results:  
-                max_id = sorted([int(record['id']) for record in results])[-1]
-            else:
-                max_id = 0
-
-        except Exception as e: 
-            print(f"An error occurred while querying the database: {e}")
-            max_id = 0
-        
-        return max_id + 1
-  
-
-    async def generate_channel_name(self, guild) -> str:
-        channel_id = await self.get_channel_id(guild)
-        return f'Chat - {channel_id}'
-
-
-    async def create_text_channel(self, name):
-        for server in self.bot.guilds:
-            if server == name.split()[0]:
-                guild = server
-
-        return await guild.create_text_channel(name)
-
-
-    async def query_table(self, guild_id):
-        pool = await self.get_pool(guild_id)
-        try:  
-            query = "SELECT id FROM public.conversations ORDER BY id ASC"
-            async with pool.acquire() as conn:
-                results = await conn.fetch(query)
-
-            if results: 
-                for result in results:
-                    channel_name = await self.generate_channel_name(result['id'])
-                    channel = get(self.bot.get_all_channels(), name=channel_name)
-                    
-                    if not channel:
-                        await self.create_text_channel(channel_name)  
-        except Exception as e:  
-            print(f"An error occurred while querying the database: {e}")
+        self.check_db.cancel()  # Stop the task when the cog unloads
+        for pool in self.pools.values():
+            await pool.close()
 
     async def get_pool(self, guild_id):
         if guild_id not in self.pools:
@@ -102,6 +37,22 @@ class chatwootdb(commands.Cog):
                 port=config['db_port']
             )
         return self.pools[guild_id]
+
+    @tasks.loop(seconds=15)
+    async def check_db(self):
+        for guild_id, pool in self.pools.items():
+            async with pool.acquire() as connection:
+                query = "SELECT * FROM public.conversations WHERE new_data = TRUE;"  # Adjust query as needed
+                result = await connection.fetch(query)
+                
+                if result:
+                    # Handle new data (e.g., sending messages to a channel)
+                    for record in result:
+                        # Example: sending to a specific channel (replace channel_id with actual ID)
+                        channel = self.bot.get_channel(channel_id)
+                        await channel.send(f"New conversation: {record}")
+                        # Mark data as processed (adjust the query as needed)
+                        await connection.execute("UPDATE public.conversations SET new_data = FALSE WHERE id = $1", record['id'])
 
     @commands.group(name='db')
     @commands.guild_only()

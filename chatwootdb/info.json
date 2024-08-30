@@ -12,7 +12,8 @@
     ],
     "requirements": [
         "asyncpg",
-        "asyncio"
+        "asyncio",
+        "discord.ext"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [
