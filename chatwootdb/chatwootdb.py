@@ -17,6 +17,18 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
+         # Initialize the loop here if not already done in your class definition.
+        if not hasattr(self, '_query_task'):
+            self._query_task = None
+            self.loop = asyncio.get_event_loop()
+            
+            async def query_every_15_seconds():
+                while True:
+                    await self.query_table()
+                    await asyncio.sleep(900)  # Sleep for 15 minutes
+
+            self._query_task = self.loop.create_task(query_every_15_seconds())
+            self._query_task.done()  # Ensure the task is started when cog is loaded
 
     async def cog_load(self):
         super().cog_load()
