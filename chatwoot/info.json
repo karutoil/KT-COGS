@@ -10,7 +10,7 @@
         "create_channels"
     ],
     "requirements": [
-        "aiohttp"
+        "chatwoot"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [

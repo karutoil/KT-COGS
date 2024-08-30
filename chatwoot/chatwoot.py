@@ -1,67 +1,78 @@
 import discord
-from discord.ext import tasks
 from redbot.core import commands, Config
-import aiohttp
+from chatwoot import ChatwootClient
 
-class chatwoot(commands.Cog):
-    """Cog to create channels based on new Chatwoot chats."""
-
+class ChatwootCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=123456789)
-        self.config.register_global(last_seen_chat_id=0)
-        self.session = aiohttp.ClientSession()
+        self.config = Config.get_conf(self, identifier=1234567890)
+        self.config.register_global(
+            chatwoot_api_key="",
+            chatwoot_url="",
+            channel_category_id=0
+        )
+        self.chatwoot_client = None
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.check_for_new_chats.start()
-
-    @tasks.loop(seconds=15)
-    async def check_for_new_chats(self):
+        # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
-        account_id = await self.config.chatwoot_account_id()
-        chatwoot_url = await self.config.chatwoot_url()
-        complete_chatwoot_url = f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations"
-        headers = {
-            "Content-Type": "application/json",
-            "api_access_token": api_key
-        }
+        base_url = await self.config.chatwoot_url()
+        self.chatwoot_client = ChatwootClient(api_key, base_url)
+        print("ChatwootCog is ready")
 
-        async with self.session.get(complete_chatwoot_url, headers=headers) as response:
-            if response.status == 200:
-                data = await response.json()
-                print(f"Chatwoot API Response: {data}")  # Debug: Print the API response
-                new_chats = [chat for chat in data['payload'] if chat['id'] > await self.config.last_seen_chat_id()]
-                if not new_chats:
-                    print("No new chats found.")  # Debug: No new cha
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot:
+            return
 
-                for chat in new_chats:
-                    await self.create_channel_for_chat(chat)
-                    await self.config.last_seen_chat_id.set(chat['id'])
-            else:
-                print(f"Failed to fetch chats: {response.status}")
+        # Example: Fetching chat data from Chatwoot
+        chats = self.chatwoot_client.chats.list()  # Modify this according to actual API endpoint
+        for chat in chats:
+            if chat['status'] == 'open':
+                await self.create_chat_channel(chat)
 
-    async def create_channel_for_chat(self, chat):
-        account_id = await self.config.chatwoot_account_id()
-        chatwoot_url = await self.config.chatwoot_url()
-        guild = self.bot.get_guild(1093028183982473258)
-        customer_email = chat['meta']['sender']['email']
-        created_at = chat['created_at']
-        messages = chat['messages']
-        chat_url = f"{chatwoot_url}/app/accounts/{account_id}/conversations/{chat['id']}"
+    async def create_chat_channel(self, chat):
+        category_id = await self.config.channel_category_id()
+        category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
+        
+        if category is None:
+            print(f"Category with ID {category_id} not found.")
+            return
 
         channel_name = f"chat-{chat['id']}"
-        channel = await guild.create_text_channel(channel_name)
+        channel = await category.create_text_channel(name=channel_name)
 
-        await channel.send(f"**Customer Email:** {customer_email}")
-        await channel.send(f"**Chat Created At:** {created_at}")
-        await channel.send(f"**Chat URL:** {chat_url}")
+        customer_email = chat['customer']['email']
+        creation_time = chat['created_at']
+        messages = chat['messages']
+        chat_url = chat['url']
 
-        for message in messages:
-            await channel.send(f"{message['created_at']}: {message['content']}")
+        embed = discord.Embed(title="New Chat Started", color=discord.Color.blue())
+        embed.add_field(name="Customer Email", value=customer_email, inline=False)
+        embed.add_field(name="Chat URL", value=chat_url, inline=False)
+        embed.add_field(name="Chat Created At", value=creation_time, inline=False)
 
-    def cog_unload(self):
-        self.bot.loop.create_task(self.session.close())
+        messages_text = "\n".join([f"{msg['created_at']}: {msg['content']}" for msg in messages])
+        embed.add_field(name="Messages", value=messages_text if messages_text else "No messages yet.", inline=False)
+
+        await channel.send(embed=embed)
+
+    @commands.command()
+    @commands.is_owner()
+    async def set_chatwoot_config(self, ctx, api_key: str, base_url: str, category_id: int):
+        """Command to set Chatwoot configuration"""
+        await self.config.chatwoot_api_key.set(api_key)
+        await self.config.chatwoot_url.set(base_url)
+        await self.config.channel_category_id.set(category_id)
+        await ctx.send("Chatwoot configuration updated!")
+
+    @commands.command()
+    @commands.is_owner()
+    async def test_chatwoot(self, ctx):
+        """Command to test the Chatwoot integration"""
+        chats = self.chatwoot_client.chats.list()  # Fetch some chats as a test
+        await ctx.send(f"Fetched {len(chats)} chats from Chatwoot.")
 
 def setup(bot):
-    bot.add_cog(chatwoot(bot))
+    bot.add_cog(ChatwootCog(bot))
