@@ -12,6 +12,8 @@ class chatwoot(commands.Cog):
             channel_category_id=0
         )
         self.chatwoot_client = None
+        conversations = chatwoot.conversations
+        all_conversations = conversations.list(account_id=1)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -71,8 +73,9 @@ class chatwoot(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        chats = self.chatwoot_client.chats.list()  # Fetch some chats as a test
-        await ctx.send(f"Fetched {len(chats)} chats from Chatwoot.")
+        conversations = chatwoot.conversations
+        all_conversations = conversations.list(account_id=1)
+        await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
 def setup(bot):
     bot.add_cog(chatwoot(bot))
