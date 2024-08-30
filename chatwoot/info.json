@@ -10,7 +10,9 @@
         "create_channels"
     ],
     "requirements": [
-        "git+https://github.com/dearkafka/woot"
+        "git+https://github.com/dearkafka/woot",
+        "httpx",
+        "discord.py"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [

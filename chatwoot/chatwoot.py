@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import httpx
 from redbot.core import commands, Config
 from woot import AsyncChatwoot
 
@@ -76,20 +77,27 @@ class chatwoot(commands.Cog):
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_url()
-    
-        # Log the base_url to check if it's correctly formatted
+        base_url = await self.config.chatwoot_base_url()
+
         await ctx.send(f"Testing Chatwoot with base URL: {base_url}")
-    
-        # Check if the base URL starts with 'http://' or 'https://'
+
         if not base_url.startswith(('http://', 'https://')):
             await ctx.send("Error: The base URL must start with 'http://' or 'https://'.")
             return
-    
-        asyncchatwoot = AsyncChatwoot(api_key, base_url)
+
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
+        }
+
         try:
-            conversations = await asyncchatwoot.conversations.list(account_id=1)  # Await the coroutine
-            await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
+            async with httpx.AsyncClient() as client:
+                response = await client.get(f"{base_url}/api/v1/accounts/1/conversations", headers=headers)
+                response.raise_for_status()
+                conversations = response.json()
+                await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
+        except httpx.HTTPStatusError as e:
+            await ctx.send(f"HTTP error occurred: {str(e)}")
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
 
