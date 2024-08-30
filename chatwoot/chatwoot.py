@@ -3,29 +3,25 @@ import asyncio
 import httpx
 from redbot.core import commands, Config
 
-class chatwoot(commands.Cog):
+class Chatwoot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
-#        self.config.register_global(
-#            chatwoot_api_key="",
-#            chatwoot_url="",
-#            channel_category_id=0
-#        )
         self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
+        self.message_cache = {}  # Dictionary to cache last seen message IDs
 
     async def poll_chatwoot(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             try:
                 await self.check_for_new_conversations()
+                await self.check_for_new_messages()
             except Exception as e:
                 print(f"Error while polling Chatwoot: {e}")
             await asyncio.sleep(15)  # Poll every 15 seconds
 
     async def check_for_new_conversations(self):
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_url()
 
         headers = {
             'api_access_token': f'{api_key}',
@@ -38,7 +34,6 @@ class chatwoot(commands.Cog):
                 response.raise_for_status()
                 data = response.json()
 
-                # Access the payload where the actual conversations are stored
                 conversations = data.get("data", {}).get("payload", [])
 
                 for chat in conversations:
@@ -63,39 +58,63 @@ class chatwoot(commands.Cog):
         channel_name = f"chat-{chat['id']}"
         channel = await category.create_text_channel(name=channel_name)
 
-        # Extracting data with fallback to avoid crashes
         customer_email = chat['meta']['sender'].get('email', 'No email provided')
         creation_time = chat.get('created_at', 'Unknown')
-        messages = chat.get('messages', [])
         chat_url = chat.get('uuid', 'No URL')
 
-        # Creating embed with detailed debug printouts
         embed = discord.Embed(title="New Chat Started", color=discord.Color.blue())
         embed.add_field(name="Customer Email", value=customer_email, inline=False)
         embed.add_field(name="Chat URL", value=chat_url, inline=False)
         embed.add_field(name="Chat Created At", value=creation_time, inline=False)
 
-        # Preparing messages to be added to the embed
-        messages_text = "\n".join([f"{msg['created_at']}: {msg['content']}" for msg in messages])
-        embed.add_field(name="Messages", value=messages_text if messages_text else "No messages yet.", inline=False)
-
-        # Debugging: Print out the constructed embed data
-        print(f"Customer Email: {customer_email}")
-        print(f"Chat URL: {chat_url}")
-        print(f"Chat Created At: {creation_time}")
-        print(f"Messages Text: {messages_text}")
-
-        # Sending the embed to the newly created channel
         await channel.send(embed=embed)
+        # Cache the last message ID for this chat
+        self.message_cache[chat['id']] = None
 
+    async def check_for_new_messages(self):
+        api_key = await self.config.chatwoot_api_key()
+
+        headers = {
+            'api_access_token': f'{api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(f"https://chat.heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+                conversations = data.get("data", {}).get("payload", [])
+
+                for chat in conversations:
+                    if chat['status'] == 'open':
+                        channel_name = f"chat-{chat['id']}"
+                        channel = discord.utils.get(self.bot.get_all_channels(), name=channel_name)
+
+                        if channel:
+                            last_message_id = self.message_cache.get(chat['id'])
+                            messages = chat.get('messages', [])
+                            new_messages = [msg for msg in messages if msg['id'] != last_message_id]
+
+                            for msg in new_messages:
+                                embed = discord.Embed(title="New Message", color=discord.Color.green())
+                                embed.add_field(name="Sender", value=msg['meta']['sender'].get('email', 'Unknown'), inline=False)
+                                embed.add_field(name="Message", value=msg['content'], inline=False)
+                                await channel.send(embed=embed)
+
+                                # Update the cached message ID
+                                self.message_cache[chat['id']] = msg['id']
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error occurred while fetching messages: {str(e)}")
+        except Exception as e:
+            print(f"An error occurred while fetching messages: {str(e)}")
 
     @commands.command()
     @commands.is_owner()
-    async def set_chatwoot_config(self, ctx, api_key: str, base_url: str, category_id: int):
+    async def set_chatwoot_config(self, ctx, api_key: str):
         """Command to set Chatwoot configuration"""
         await self.config.chatwoot_api_key.set(api_key)
-        await self.config.chatwoot_url.set(base_url)
-        await self.config.channel_category_id.set(category_id)
         await ctx.send("Chatwoot configuration updated!")
 
     @commands.command()
@@ -126,4 +145,4 @@ class chatwoot(commands.Cog):
             self.bg_task.cancel()
 
 def setup(bot):
-    bot.add_cog(chatwoot(bot))
+    bot.add_cog(Chatwoot(bot))
