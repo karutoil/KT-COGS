@@ -36,7 +36,10 @@ class chatwoot(commands.Cog):
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 response = await client.get(f"https://chat.heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
                 response.raise_for_status()
-                conversations = response.json()
+                data = response.json()
+
+                # Access the payload where the actual conversations are stored
+                conversations = data.get("data", {}).get("payload", [])
 
                 for chat in conversations:
                     if chat['status'] == 'open':
