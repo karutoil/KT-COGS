@@ -27,7 +27,7 @@ class chatwoot(commands.Cog):
         """Check for new chats on Chatwoot and create a channel called 'test'."""
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
-                chatwoot_url = await self.config.chatwoot_url()
+        chatwoot_url = await self.config.chatwoot_url()
 
         if not api_key or not account_id:
             return await ctx.send("Chatwoot credentials are not set.")
