@@ -3,7 +3,7 @@ from discord.ext import tasks
 from redbot.core import commands, Config
 import aiohttp
 
-class ChatwootCog(commands.Cog):
+class chatwoot(commands.Cog):
     """Cog to create channels based on new Chatwoot chats."""
 
     def __init__(self, bot):
@@ -61,4 +61,4 @@ class ChatwootCog(commands.Cog):
         self.bot.loop.create_task(self.session.close())
 
 def setup(bot):
-    bot.add_cog(ChatwootCog(bot))
+    bot.add_cog(chatwoot(bot))
