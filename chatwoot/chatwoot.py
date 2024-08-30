@@ -77,14 +77,7 @@ class chatwoot(commands.Cog):
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_url()
-
-        await ctx.send(f"Testing Chatwoot with base URL: {base_url}")
-
-        if not base_url.startswith(('http://', 'https://')):
-            await ctx.send("Error: The base URL must start with 'http://' or 'https://'.")
-            return
-
+        
         headers = {
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
@@ -92,7 +85,7 @@ class chatwoot(commands.Cog):
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{base_url}/api/v1/accounts/1/conversations", headers=headers)
+                response = await client.get(f"https://heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
                 response.raise_for_status()
                 conversations = response.json()
                 await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
