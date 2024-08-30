@@ -1,26 +1,21 @@
-{#
-`required_cogs`, `requirements`, `min_bot_version`, `hidden`, and `disabled`
-are added here for convenience, but they're not part of cookiecutter template.
--#}
-{% set authors = cookiecutter.authors.split(";") -%}
-{% set tags = cookiecutter.tags.split() -%}
 {
-    "$schema": "https://raw.githubusercontent.com/Cog-Creators/Red-DiscordBot/V3/develop/schema/red_cog.schema.json",
-    "name": "{{ cookiecutter.cog_class_name }}",
-    "short": "{{ cookiecutter.short }}",
-    "description": "{{ cookiecutter.description }}",
-    "end_user_data_statement": "{{ cookiecutter.end_user_data_statement }}",
-    {% if cookiecutter.install_msg -%}
-    "install_msg": "{{ cookiecutter.install_msg }}",
-    {% endif -%}
-    "author": {{ authors | map('trim') | list | jsonify | indent }},
-    "required_cogs": {},
+    "author": [
+        "karutoil"
+    ],
+    "description": "Chatwoot API wrapper",
+    "install_msg": "TBH",
+    "short": "Chatwoot API wrapper",
+    "permissions": [
+        "send_messages",
+        "create_channels"
+    ],
     "requirements": [
         "aiohttp"
     ],
-    "tags": {{ tags | jsonify | indent }},
-    "min_bot_version": "3.5.0",
-    "hidden": false,
-    "disabled": false,
-    "type": "COG"
+    "end_user_data_statement": "Sucks for you",
+    "tags": [
+        "chat",
+        "chatwoot"
+    ],
+    "min_bot_version": "3.5.0"
 }
