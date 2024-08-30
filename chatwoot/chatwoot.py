@@ -71,27 +71,27 @@ class chatwoot(commands.Cog):
         await self.config.channel_category_id.set(category_id)
         await ctx.send("Chatwoot configuration updated!")
 
-@commands.command()
-@commands.is_owner()
-async def test_chatwoot(self, ctx):
-    """Command to test the Chatwoot integration"""
-    api_key = await self.config.chatwoot_api_key()
-    base_url = await self.config.chatwoot_url()
-
-    # Log the base_url to check if it's correctly formatted
-    await ctx.send(f"Testing Chatwoot with base URL: {base_url}")
-
-    # Check if the base URL starts with 'http://' or 'https://'
-    if not base_url.startswith(('http://', 'https://')):
-        await ctx.send("Error: The base URL must start with 'http://' or 'https://'.")
-        return
-
-    asyncchatwoot = AsyncChatwoot(api_key, base_url)
-    try:
-        conversations = await asyncchatwoot.conversations.list(account_id=1)  # Await the coroutine
-        await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
-    except Exception as e:
-        await ctx.send(f"An error occurred: {str(e)}")
+    @commands.command()
+    @commands.is_owner()
+    async def test_chatwoot(self, ctx):
+        """Command to test the Chatwoot integration"""
+        api_key = await self.config.chatwoot_api_key()
+        base_url = await self.config.chatwoot_url()
+    
+        # Log the base_url to check if it's correctly formatted
+        await ctx.send(f"Testing Chatwoot with base URL: {base_url}")
+    
+        # Check if the base URL starts with 'http://' or 'https://'
+        if not base_url.startswith(('http://', 'https://')):
+            await ctx.send("Error: The base URL must start with 'http://' or 'https://'.")
+            return
+    
+        asyncchatwoot = AsyncChatwoot(api_key, base_url)
+        try:
+            conversations = await asyncchatwoot.conversations.list(account_id=1)  # Await the coroutine
+            await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {str(e)}")
 
 def setup(bot):
     bot.add_cog(chatwoot(bot))
