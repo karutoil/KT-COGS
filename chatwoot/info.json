@@ -10,7 +10,7 @@
         "create_channels"
     ],
     "requirements": [
-        "chatwoot"
+        "git+https://github.com/dearkafka/woot"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [
