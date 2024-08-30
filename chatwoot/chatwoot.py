@@ -28,7 +28,6 @@ class chatwoot(commands.Cog):
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
         chatwoot_url = await self.config.chatwoot_url()
-        last_seen_chat_id = None
         
         if not api_key or not account_id:
             await ctx.send("Chatwoot credentials are not set.")
@@ -46,28 +45,17 @@ class chatwoot(commands.Cog):
 
         if response.status_code == 200:
             conversations = response.json().get("payload", [])
-            new_conversations = []
 
-            for conv in conversations:
-                if last_seen_chat_id is None or conv['id'] > last_seen_chat_id:
-                    new_conversations.append(conv)
-
-            if new_conversations:
-                # Update the last seen chat ID
-                await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
-
+        for conversation in conversations:
+            if conversation["status"] == "open":
+                channel_name = f"test-{conversation['uuid']}"
                 guild = ctx.guild
-                existing_channel = discord.utils.get(guild.channels, name="test")
+                existing_channel = discord.utils.get(guild.channels, name=channel_name)
                 if not existing_channel:
-                    await guild.create_text_channel("test")
-                    await ctx.send("Channel 'test' created.")
+                    await guild.create_text_channel(channel_name)
+                    await ctx.send(f"Channel '{channel_name}' created.")
                 else:
-                    await ctx.send("Channel 'test' already exists.")
-            else:
-                await ctx.send("No new chats found.")
-        else:
-            await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
-            await ctx.send(f"Response: {response.text}")
+                    await ctx.send(f"Channel '{channel_name}' already exists.")
 
 def setup(bot: Red):
     bot.add_cog(chatwoot(bot))
