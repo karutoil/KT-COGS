@@ -2,13 +2,13 @@ import discord
 from redbot.core import commands, Config
 from woot import Chatwoot, AsyncChatwoot
 
-class ChatwootCog(commands.Cog):
+class chatwoot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
         self.config.register_global(
             chatwoot_api_key="",
-            chatwoot_base_url="",
+            chatwoot_ur="",
             channel_category_id=0
         )
         self.chatwoot_client = None
@@ -17,8 +17,8 @@ class ChatwootCog(commands.Cog):
     async def on_ready(self):
         # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_base_url()
-        self.chatwoot_client = ChatwootClient(api_key, base_url)
+        base_url = await self.config.chatwoot_url()
+        self.chatwoot_client = AsyncChatwoot(api_key, base_url)
         print("ChatwootCog is ready")
 
     @commands.Cog.listener()
@@ -34,7 +34,7 @@ class ChatwootCog(commands.Cog):
 
     async def create_chat_channel(self, chat):
         category_id = await self.config.channel_category_id()
-        category = discord.utils.get(self.bot.get_guild(YOUR_GUILD_ID).categories, id=category_id)
+        category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
         
         if category is None:
             print(f"Category with ID {category_id} not found.")
@@ -71,9 +71,12 @@ class ChatwootCog(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        conversations = AsyncChatwoot.conversations
+        api_key = await self.config.chatwoot_api_key()
+        base_url = await self.config.chatwoot_url()
+        asyncchatwoot = AsyncChatwoot(api_key, base_url)
+        conversations = asyncchatwoot.conversations
         all_conversations = conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
 def setup(bot):
-    bot.add_cog(ChatwootCog(bot))
+    bot.add_cog(chatwoot(bot))
