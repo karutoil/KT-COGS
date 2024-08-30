@@ -42,7 +42,7 @@ class chatwoot(commands.Cog):
             f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
-
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             conversations = response.json().get("payload", [])
 
