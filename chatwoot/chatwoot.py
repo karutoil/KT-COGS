@@ -2,7 +2,6 @@ import discord
 import asyncio
 import httpx
 from redbot.core import commands, Config
-from woot import AsyncChatwoot
 
 class chatwoot(commands.Cog):
     def __init__(self, bot):
