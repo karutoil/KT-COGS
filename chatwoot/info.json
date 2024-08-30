@@ -16,7 +16,7 @@ are added here for convenience, but they're not part of cookiecutter template.
     "author": {{ authors | map('trim') | list | jsonify | indent }},
     "required_cogs": {},
     "requirements": [
-        "requests"
+        "aiohttp"
     ],
     "tags": {{ tags | jsonify | indent }},
     "min_bot_version": "3.5.0",
