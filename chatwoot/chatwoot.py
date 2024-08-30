@@ -2,7 +2,7 @@ import discord
 from redbot.core import commands, Config
 from woot import Chatwoot, AsyncChatwoot
 
-class ChatwootCog(commands.Cog):
+class chatwoot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
@@ -76,4 +76,4 @@ class ChatwootCog(commands.Cog):
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
 def setup(bot):
-    bot.add_cog(ChatwootCog(bot))
+    bot.add_cog(chatwoot(bot))
