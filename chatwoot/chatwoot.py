@@ -3,7 +3,7 @@ import asyncio
 import httpx
 from redbot.core import commands, Config
 
-class Chatwoot(commands.Cog):
+class chatwoot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
@@ -145,4 +145,4 @@ class Chatwoot(commands.Cog):
             self.bg_task.cancel()
 
 def setup(bot):
-    bot.add_cog(Chatwoot(bot))
+    bot.add_cog(chatwoot(bot))
