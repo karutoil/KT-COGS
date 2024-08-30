@@ -24,49 +24,7 @@ class chatwoot(commands.Cog):
 
     @commands.command()
     async def check_new_chats(self, ctx):
-        """Check for new chats on Chatwoot and create a channel called 'test'."""
-        api_key = await self.config.chatwoot_api_key()
-        account_id = await self.config.chatwoot_account_id()
-        chatwoot_url = await self.config.chatwoot_url()
-
-        if not api_key or not account_id:
-            return await ctx.send("Chatwoot credentials are not set.")
-
-        url = f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations"
-
-        headers = {
-            "Content-Type": "application/json",
-            "api-access-token": api_key,
-        }
-
-        response = requests.get(url, headers=headers)
-
-        if response.status_code == 200:
-            conversations = response.json().get("payload", [])
-            new_conversations = [
-                conv for conv in conversations if conv['id'] > last_seen_chat_id
-            ]
-
-            if new_conversations:
-                # Update the last seen chat ID
-                await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
-
-                guild = ctx.guild
-                existing_channel = discord.utils.get(guild.channels, name="test")
-                if not existing_channel:
-                    await guild.create_text_channel("test")
-                    return await ctx.send("Channel 'test' created.")
-                else:
-                    return await ctx.send("Channel 'test' already exists.")
-
-            else:
-                return await ctx.send("No new chats found.")
-        else:
-            return await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
-            return await ctx.send(f"Response: {response.text}")
-
-"""     @commands.command()
-    async def check_new_chats(self, ctx):
+        """Check for new chats on Chatwoot and create a channel with the chat ID."""
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
         chatwoot_url = await self.config.chatwoot_url()
@@ -82,7 +40,7 @@ class chatwoot(commands.Cog):
         }
 
         response = requests.get(
-            f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
+            f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
 
@@ -99,17 +57,21 @@ class chatwoot(commands.Cog):
                 await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
 
                 guild = ctx.guild
-                existing_channel = discord.utils.get(guild.channels, name="test")
-                if not existing_channel:
-                    await guild.create_text_channel("test")
-                    await ctx.send("Channel 'test' created.")
-                else:
-                    await ctx.send("Channel 'test' already exists.")
+                for conv in new_conversations:
+                    existing_channel = discord.utils.get(guild.channels, name=str(conv['id']))
+                    if not existing_channel:
+                        await guild.create_text_channel(str(conv['id']))
+                        await ctx.send(f"Channel '{conv['id']}' created.")
             else:
                 await ctx.send("No new chats found.")
         else:
             await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
-            await ctx.send(f"Response: {response.text}") """
+            await ctx.send(f"Response: {response.text}")
 
 def setup(bot: Red):
+    """
+    Load the chatwoot cog into the bot.
+
+    This function is called by discord.py when the cog is loaded.
+    """
     bot.add_cog(chatwoot(bot))
