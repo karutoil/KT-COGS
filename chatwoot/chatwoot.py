@@ -42,11 +42,19 @@ class chatwoot(commands.Cog):
             f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
+        
         if response.status_code == 200:
             conversations = response.json().get("payload", [])
-            new_conversations = [conv for conv in conversations if conv.get("unread_count", 0) > 0]
+            new_conversations = []
+
+            for conv in conversations:
+                if last_seen_chat_id is None or conv['id'] > last_seen_chat_id:
+                    new_conversations.append(conv)
 
             if new_conversations:
+                # Update the last seen chat ID
+                await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
+
                 guild = ctx.guild
                 existing_channel = discord.utils.get(guild.channels, name="test")
                 if not existing_channel:
@@ -58,7 +66,7 @@ class chatwoot(commands.Cog):
                 await ctx.send("No new chats found.")
         else:
             await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
-            await ctx.send(f"Response: {response.text}")  # Debugging output
+            await ctx.send(f"Response: {response.text}")
 
 def setup(bot: Red):
     bot.add_cog(chatwoot(bot))
