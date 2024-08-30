@@ -77,9 +77,9 @@ class chatwoot(commands.Cog):
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
         api_key = await self.config.chatwoot_api_key()
-        
+
         headers = {
-            'Authorization': f'Bearer {api_key}',
+            'api_access_token': f'{api_key}',
             'Content-Type': 'application/json'
         }
 
