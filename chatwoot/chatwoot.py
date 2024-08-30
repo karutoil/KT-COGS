@@ -16,7 +16,7 @@ class chatwoot(commands.Cog):
     async def on_ready(self):
         await self.check_for_new_chats.start()
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(seconds=15)
     async def check_for_new_chats(self):
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
