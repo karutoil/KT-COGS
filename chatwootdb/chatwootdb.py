@@ -1,6 +1,7 @@
 import asyncpg
 from redbot.core import commands, Config
 from redbot.core.i18n import Translator
+import asyncio
 
 _ = Translator("chatwootdb", __file__)
 
@@ -16,6 +17,7 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
+        self.periodic_tasks = {}  # Dictionary to store periodic tasks for each guild
 
     async def cog_load(self):
         pass  # No need to initialize pools here
@@ -23,6 +25,8 @@ class chatwootdb(commands.Cog):
     async def cog_unload(self):
         for pool in self.pools.values():
             await pool.close()
+        for task in self.periodic_tasks.values():
+            task.cancel()
 
     async def get_pool(self, guild_id):
         if guild_id not in self.pools:
@@ -93,6 +97,25 @@ class chatwootdb(commands.Cog):
             await connection.execute(query)
         
         await ctx.send("Data deleted successfully.")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.bot.loop.create_task(self.periodic_data_fetch())
+
+    async def periodic_data_fetch(self):
+        await self.bot.wait_until_red_ready()
+        while not self.bot.is_closed():
+            guilds = list(self.pools.keys())  # Get all guild IDs with active pools
+            for guild_id in guilds:
+                pool = self.pools[guild_id]
+                async with pool.acquire() as connection:
+                    result = await connection.fetch("SELECT * FROM conversations WHERE updated_at > (NOW() - INTERVAL '15 seconds')")
+                
+                if result:
+                    result_str = '\n'.join([str(record) for record in result])
+                    await self.bot.get_guild(guild_id).system_channel.send(f"New data from conversations:\n{result_str}")
+            
+            await asyncio.sleep(15)  # Wait for 15 seconds before next iteration
 
 def setup(bot):
     bot.add_cog(chatwootdb(bot))
