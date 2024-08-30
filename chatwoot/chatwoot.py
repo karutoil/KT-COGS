@@ -27,7 +27,50 @@ class chatwoot(commands.Cog):
         """Check for new chats on Chatwoot and create a channel called 'test'."""
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
+                chatwoot_url = await self.config.chatwoot_url()
+
+        if not api_key or not account_id:
+            return await ctx.send("Chatwoot credentials are not set.")
+
+        url = f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations"
+
+        headers = {
+            "Content-Type": "application/json",
+            "api-access-token": api_key,
+        }
+
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            conversations = response.json().get("payload", [])
+            new_conversations = [
+                conv for conv in conversations if conv['id'] > last_seen_chat_id
+            ]
+
+            if new_conversations:
+                # Update the last seen chat ID
+                await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
+
+                guild = ctx.guild
+                existing_channel = discord.utils.get(guild.channels, name="test")
+                if not existing_channel:
+                    await guild.create_text_channel("test")
+                    return await ctx.send("Channel 'test' created.")
+                else:
+                    return await ctx.send("Channel 'test' already exists.")
+
+            else:
+                return await ctx.send("No new chats found.")
+        else:
+            return await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
+            return await ctx.send(f"Response: {response.text}")
+
+"""     @commands.command()
+    async def check_new_chats(self, ctx):
+        api_key = await self.config.chatwoot_api_key()
+        account_id = await self.config.chatwoot_account_id()
         chatwoot_url = await self.config.chatwoot_url()
+        last_seen_chat_id = await self.config.last_seen_chat_id()
         
         if not api_key or not account_id:
             await ctx.send("Chatwoot credentials are not set.")
@@ -42,19 +85,31 @@ class chatwoot(commands.Cog):
             f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
-        response = requests.get(chatwoot_url, headers=headers)
-        conversations = response.json().get("payload", [])
 
-        for conversation in conversations:
-            if conversation["status"] == "open":
-                channel_name = f"test-{conversation['uuid']}"
+        if response.status_code == 200:
+            conversations = response.json().get("payload", [])
+            new_conversations = []
+
+            for conv in conversations:
+                if last_seen_chat_id is None or conv['id'] > last_seen_chat_id:
+                    new_conversations.append(conv)
+
+            if new_conversations:
+                # Update the last seen chat ID
+                await self.config.last_seen_chat_id.set(new_conversations[0]['id'])
+
                 guild = ctx.guild
-                existing_channel = discord.utils.get(guild.channels, name=channel_name)
+                existing_channel = discord.utils.get(guild.channels, name="test")
                 if not existing_channel:
-                    await guild.create_text_channel(channel_name)
-                    await ctx.send(f"Channel '{channel_name}' created.")
+                    await guild.create_text_channel("test")
+                    await ctx.send("Channel 'test' created.")
                 else:
-                    await ctx.send(f"Channel '{channel_name}' already exists.")
+                    await ctx.send("Channel 'test' already exists.")
+            else:
+                await ctx.send("No new chats found.")
+        else:
+            await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
+            await ctx.send(f"Response: {response.text}") """
 
 def setup(bot: Red):
     bot.add_cog(chatwoot(bot))
