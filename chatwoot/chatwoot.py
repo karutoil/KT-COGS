@@ -27,9 +27,14 @@ class chatwoot(commands.Cog):
             return
 
         # Example: Fetching chat data from Chatwoot
-        chats = self.chatwoot_client.chats.list()  # Modify this according to actual API endpoint
+        #chats = self.chatwoot_client.chats.list()  # Modify this according to actual API endpoint
+        api_key = await self.config.chatwoot_api_key()
+        base_url = await self.config.chatwoot_url()
+        asyncchatwoot = AsyncChatwoot(api_key, base_url)
+        conversations = asyncchatwoot.conversations
+        chats = conversations.list(account_id=1)
         for chat in chats:
-            if chat['status'] == 'open':
+            if chat['status'] == 'resolved':
                 await self.create_chat_channel(chat)
 
     async def create_chat_channel(self, chat):
