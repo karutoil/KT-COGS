@@ -1,6 +1,6 @@
 import discord
 from redbot.core import commands, Config
-from chatwoot import ChatwootClient
+from woot import Chatwoot, AsyncChatwoot
 
 class ChatwootCog(commands.Cog):
     def __init__(self, bot):
@@ -18,7 +18,7 @@ class ChatwootCog(commands.Cog):
         # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
         base_url = await self.config.chatwoot_url()
-        self.chatwoot_client = ChatwootClient(api_key, base_url)
+        self.chatwoot_client = Chatwoot(api_key, base_url)
         print("ChatwootCog is ready")
 
     @commands.Cog.listener()
