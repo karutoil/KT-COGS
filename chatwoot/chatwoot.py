@@ -39,7 +39,7 @@ class chatwoot(commands.Cog):
         }
 
         response = requests.get(
-            f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
+            f"{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
         response = requests.get(chatwoot_url, headers=headers)
