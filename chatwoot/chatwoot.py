@@ -51,7 +51,7 @@ class chatwoot(commands.Cog):
             print(f"An error occurred while fetching conversations: {str(e)}")
 
     async def create_chat_channel(self, chat):
-        category_id = await self.config.channel_category_id()
+        category_id = 1093031434974937128
         category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
 
         if category is None:
