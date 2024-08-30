@@ -12,7 +12,7 @@ class chatwoot(commands.Cog):
             channel_category_id=0
         )
         self.chatwoot_client = None
-        conversations = Chatwoot.conversations
+        conversations = async_chatwoot.conversations
         all_conversations = conversations.list(account_id=1)
 
     @commands.Cog.listener()
@@ -20,7 +20,7 @@ class chatwoot(commands.Cog):
         # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
         base_url = await self.config.chatwoot_url()
-        self.chatwoot_client = Chatwoot(api_key, base_url)
+        async_chatwoot = AsyncChatwoot(api_key, base_url)
         print("ChatwootCog is ready")
 
     @commands.Cog.listener()
@@ -73,7 +73,7 @@ class chatwoot(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        conversations = Chatwoot.conversations
+        conversations = async_chatwoot.conversations
         all_conversations = conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
