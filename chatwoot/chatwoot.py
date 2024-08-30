@@ -57,7 +57,7 @@ class chatwoot(commands.Cog):
                         await ctx.send(f"Channel '{conv['id']}' created.")
                 await ctx.send(f"New chats found and {len(new_conversations)} channels created.")
             else:
-                await ctx.send("No new chats found.")
+                await ctx.send("No new chats found. Last seen chat ID: " + str(last_seen_chat_id))
         else:
             await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
             await ctx.send(f"Response: {response.text}")
