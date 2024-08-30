@@ -2,7 +2,7 @@ import discord
 from redbot.core import commands, Config
 from woot import Chatwoot, AsyncChatwoot
 
-class chatwoot(commands.Cog):
+class chatwoot2(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
@@ -11,7 +11,8 @@ class chatwoot(commands.Cog):
             chatwoot_url="",
             channel_category_id=0
         )
-        conversations = self.chatwoot_client.conversations
+        self.chatwoot_client = None
+        conversations = Chatwoot.conversations
         all_conversations = conversations.list(account_id=1)
 
     @commands.Cog.listener()
@@ -72,9 +73,9 @@ class chatwoot(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        conversations = self.chatwoot_client.conversations
+        conversations = Chatwoot.conversations
         all_conversations = conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
 def setup(bot):
-    bot.add_cog(chatwoot(bot))
+    bot.add_cog(chatwoot2(bot))
