@@ -43,8 +43,7 @@ class chatwoot(commands.Cog):
             headers=headers
         )
         response = requests.get(chatwoot_url, headers=headers)
-        if response.status_code == 200:
-            conversations = response.json().get("payload", [])
+        conversations = response.json().get("payload", [])
 
         for conversation in conversations:
             if conversation["status"] == "open":
