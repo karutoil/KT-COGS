@@ -17,7 +17,7 @@ class chatwoot(commands.Cog):
         await ctx.send("Chatwoot credentials set.")
 
     @commands.command()
-    async def set_chatwoot_credentials(self, ctx, chatwoot_url: str):
+    async def set_chatwoot_url(self, ctx, chatwoot_url: str):
         """Set Chatwoot URL."""
         await self.config.chatwoot_url.set(chatwoot_url)
         await ctx.send("Chatwoot URL set.")
