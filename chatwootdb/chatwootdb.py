@@ -43,7 +43,7 @@ class chatwootdb(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
-    @commands.command(name='setconfig')
+    @db.command(name='setconfig')
     @commands.has_permissions(administrator=True)
     async def set_config(self, ctx, user: str, password: str, database: str, host: str, port: int = 5432):
         """Sets the database configuration for this server"""
@@ -54,7 +54,7 @@ class chatwootdb(commands.Cog):
         await self.config.guild(ctx.guild).db_port.set(port)
         await ctx.send("Database configuration updated.")
 
-    @commands.command(name='query')
+    @db.command(name='query')
     async def query_db(self, ctx, *, query: str):
         """Executes a query on the configured database"""
         pool = await self.get_pool(ctx.guild.id)
@@ -67,7 +67,7 @@ class chatwootdb(commands.Cog):
         else:
             await ctx.send("No results found.")
 
-    @commands.command(name='insert')
+    @db.command(name='insert')
     async def insert_db(self, ctx, *, query: str):
         """Inserts data into the configured database"""
         pool = await self.get_pool(ctx.guild.id)
@@ -76,7 +76,7 @@ class chatwootdb(commands.Cog):
         
         await ctx.send("Data inserted successfully.")
 
-    @commands.command(name='update')
+    @db.command(name='update')
     async def update_db(self, ctx, *, query: str):
         """Updates data in the configured database"""
         pool = await self.get_pool(ctx.guild.id)
@@ -85,7 +85,7 @@ class chatwootdb(commands.Cog):
         
         await ctx.send("Data updated successfully.")
 
-    @commands.command(name='delete')
+    @db.command(name='delete')
     async def delete_db(self, ctx, *, query: str):
         """Deletes data from the configured database"""
         pool = await self.get_pool(ctx.guild.id)
