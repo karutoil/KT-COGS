@@ -20,9 +20,11 @@ class chatwootdb(commands.Cog):
         self.pools = {}  # Dictionary to hold connection pools per server
 
     async def cog_load(self):
+        print("Cog loaded, starting check_db task...")  # Debugging
         self.check_db.start()  # Start the task when the cog loads
 
     async def cog_unload(self):
+        print("Cog unloaded, canceling check_db task...")  # Debugging
         self.check_db.cancel()  # Stop the task when the cog unloads
         for pool in self.pools.values():
             await pool.close()
@@ -41,6 +43,7 @@ class chatwootdb(commands.Cog):
 
     @tasks.loop(seconds=15)
     async def check_db(self):
+        print("check_db task is running...")  # Debugging
         for guild_id, pool in self.pools.items():
             guild = self.bot.get_guild(guild_id)
             if guild:
