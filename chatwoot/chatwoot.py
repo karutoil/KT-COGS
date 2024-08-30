@@ -27,15 +27,28 @@ class chatwoot(commands.Cog):
     async def check_for_new_conversations(self):
         api_key = await self.config.chatwoot_api_key()
         base_url = await self.config.chatwoot_url()
-        asyncchatwoot = AsyncChatwoot(api_key, base_url)
-        conversations = await asyncchatwoot.conversations.list(account_id=1)
 
-        for chat in conversations:
-            if chat['status'] == 'resolved':
-                channel_name = f"chat-{chat['id']}"
-                if discord.utils.get(self.bot.get_all_channels(), name=channel_name):
-                    continue  # Skip if the channel already exists
-                await self.create_chat_channel(chat)
+        headers = {
+            'api_access_token': f'{api_key}',
+            'Content-Type': 'application/json'
+        }
+
+        try:
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(f"https://chat.heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
+                response.raise_for_status()
+                conversations = response.json()
+
+                for chat in conversations:
+                    if chat['status'] == 'open':
+                        channel_name = f"chat-{chat['id']}"
+                        if discord.utils.get(self.bot.get_all_channels(), name=channel_name):
+                            continue  # Skip if the channel already exists
+                        await self.create_chat_channel(chat)
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP error occurred while fetching conversations: {str(e)}")
+        except Exception as e:
+            print(f"An error occurred while fetching conversations: {str(e)}")
 
     async def create_chat_channel(self, chat):
         category_id = await self.config.channel_category_id()
