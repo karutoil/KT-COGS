@@ -30,8 +30,11 @@ class chatwoot(commands.Cog):
         async with self.session.get(complete_chatwoot_url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
+                print(f"Chatwoot API Response: {data}")  # Debug: Print the API response
                 new_chats = [chat for chat in data['payload'] if chat['id'] > await self.config.last_seen_chat_id()]
-                
+                if not new_chats:
+                    print("No new chats found.")  # Debug: No new cha
+
                 for chat in new_chats:
                     await self.create_channel_for_chat(chat)
                     await self.config.last_seen_chat_id.set(chat['id'])
