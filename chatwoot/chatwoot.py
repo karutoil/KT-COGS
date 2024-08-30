@@ -55,36 +55,36 @@ class chatwoot(commands.Cog):
     async def create_chat_channel(self, chat):
         category_id = 1093031434974937128
         category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
-    
+
         if category is None:
             print(f"Category with ID {category_id} not found.")
             return
-    
+
         channel_name = f"chat-{chat['id']}"
         channel = await category.create_text_channel(name=channel_name)
-    
+
         # Extracting data with fallback to avoid crashes
         customer_email = chat['meta']['sender'].get('email', 'No email provided')
         creation_time = chat.get('created_at', 'Unknown')
         messages = chat.get('messages', [])
         chat_url = chat.get('uuid', 'No URL')
-    
+
         # Creating embed with detailed debug printouts
         embed = discord.Embed(title="New Chat Started", color=discord.Color.blue())
         embed.add_field(name="Customer Email", value=customer_email, inline=False)
         embed.add_field(name="Chat URL", value=chat_url, inline=False)
         embed.add_field(name="Chat Created At", value=creation_time, inline=False)
-    
+
         # Preparing messages to be added to the embed
         messages_text = "\n".join([f"{msg['created_at']}: {msg['content']}" for msg in messages])
         embed.add_field(name="Messages", value=messages_text if messages_text else "No messages yet.", inline=False)
-    
+
         # Debugging: Print out the constructed embed data
         print(f"Customer Email: {customer_email}")
         print(f"Chat URL: {chat_url}")
         print(f"Chat Created At: {creation_time}")
         print(f"Messages Text: {messages_text}")
-    
+
         # Sending the embed to the newly created channel
         await channel.send(embed=embed)
 
@@ -119,6 +119,11 @@ class chatwoot(commands.Cog):
             await ctx.send(f"HTTP error occurred: {str(e)}")
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
+
+    def cog_unload(self):
+        """This function is called when the cog is unloaded."""
+        if hasattr(self, 'bg_task'):
+            self.bg_task.cancel()
 
 def setup(bot):
     bot.add_cog(chatwoot(bot))
