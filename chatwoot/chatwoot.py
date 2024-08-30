@@ -28,6 +28,7 @@ class chatwoot(commands.Cog):
         api_key = await self.config.chatwoot_api_key()
         account_id = await self.config.chatwoot_account_id()
         chatwoot_url = await self.config.chatwoot_url()
+        last_seen_chat_id = await self.config.last_seen_chat_id()
         
         if not api_key or not account_id:
             await ctx.send("Chatwoot credentials are not set.")
@@ -42,7 +43,7 @@ class chatwoot(commands.Cog):
             f"https://{chatwoot_url}/api/v1/accounts/{account_id}/conversations",
             headers=headers
         )
-        
+
         if response.status_code == 200:
             conversations = response.json().get("payload", [])
             new_conversations = []
