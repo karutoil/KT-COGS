@@ -9,7 +9,7 @@ class chatwoot(commands.Cog):
         self.config = Config.get_conf(self, identifier=1234567890)
         self.config.register_global(
             chatwoot_api_key="",
-            chatwoot_base_url="",
+            chatwoot_url="",
             channel_category_id=0
         )
         self.chatwoot_client = None
@@ -26,7 +26,7 @@ class chatwoot(commands.Cog):
 
     async def check_for_new_conversations(self):
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_base_url()
+        base_url = await self.config.chatwoot_url()
         asyncchatwoot = AsyncChatwoot(api_key, base_url)
         conversations = await asyncchatwoot.conversations.list(account_id=1)
 
@@ -68,7 +68,7 @@ class chatwoot(commands.Cog):
     async def set_chatwoot_config(self, ctx, api_key: str, base_url: str, category_id: int):
         """Command to set Chatwoot configuration"""
         await self.config.chatwoot_api_key.set(api_key)
-        await self.config.chatwoot_base_url.set(base_url)
+        await self.config.chatwoot_url.set(base_url)
         await self.config.channel_category_id.set(category_id)
         await ctx.send("Chatwoot configuration updated!")
 
@@ -77,7 +77,7 @@ class chatwoot(commands.Cog):
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_base_url()
+        base_url = await self.config.chatwoot_url()
         asyncchatwoot = AsyncChatwoot(api_key, base_url)
         conversations = await asyncchatwoot.conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
