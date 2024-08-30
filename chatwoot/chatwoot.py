@@ -85,7 +85,7 @@ class chatwoot(commands.Cog):
 
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"https://heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
+                response = await client.get(f"https://chat.heavisidehosting.com/api/v1/accounts/1/conversations", headers=headers)
                 response.raise_for_status()
                 conversations = response.json()
                 await ctx.send(f"Fetched {len(conversations)} chats from Chatwoot.")
