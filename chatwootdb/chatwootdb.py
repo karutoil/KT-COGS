@@ -2,6 +2,7 @@ import asyncpg
 from redbot.core import commands, Config
 from redbot.core.i18n import Translator
 from discord.ext import tasks
+import discord
 
 _ = Translator("chatwootdb", __file__)
 
@@ -41,23 +42,29 @@ class chatwootdb(commands.Cog):
     @tasks.loop(seconds=15)
     async def check_db(self):
         for guild_id, pool in self.pools.items():
-            async with pool.acquire() as connection:
-                query = "SELECT id FROM public.conversations WHERE new_data = TRUE;"  # Adjust query as needed
-                result = await connection.fetch(query)
-                
-                if result:
-                    guild = self.bot.get_guild(guild_id)
-                    if guild:
+            guild = self.bot.get_guild(guild_id)
+            if guild:
+                async with pool.acquire() as connection:
+                    query = "SELECT id FROM public.conversations WHERE new_data = TRUE;"  # Adjust query as needed
+                    result = await connection.fetch(query)
+                    
+                    if result:
+                        print(f"Found new conversations: {result}")  # Debugging
                         for record in result:
                             channel_name = f"Chat - {record['id']}"
                             # Check if the channel already exists
                             existing_channel = discord.utils.get(guild.text_channels, name=channel_name)
                             if not existing_channel:
                                 # Create the text channel
+                                print(f"Creating new channel: {channel_name}")  # Debugging
                                 new_channel = await guild.create_text_channel(channel_name)
                                 await new_channel.send(f"New conversation started with ID: {record['id']}")
-                            # Mark data as processed (adjust the query as needed)
-                            await connection.execute("UPDATE public.conversations SET new_data = FALSE WHERE id = $1", record['id'])
+                                # Mark data as processed (adjust the query as needed)
+                                await connection.execute("UPDATE public.conversations SET new_data = FALSE WHERE id = $1", record['id'])
+                            else:
+                                print(f"Channel already exists: {channel_name}")  # Debugging
+                    else:
+                        print("No new conversations found.")  # Debugging
 
     @commands.group(name='db')
     @commands.guild_only()
