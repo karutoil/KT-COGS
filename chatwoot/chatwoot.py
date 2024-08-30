@@ -11,7 +11,6 @@ class chatwoot(commands.Cog):
             chatwoot_url="",
             channel_category_id=0
         )
-        self.chatwoot_client = None
         conversations = self.chatwoot_client.conversations
         all_conversations = conversations.list(account_id=1)
 
