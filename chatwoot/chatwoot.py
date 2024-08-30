@@ -17,7 +17,7 @@ class chatwoot(commands.Cog):
         # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
         base_url = await self.config.chatwoot_url()
-        self.chatwoot_client = AsyncChatwoot(api_key, base_url)
+        self.AsyncChatwoot = AsyncChatwoot(api_key, base_url)
         print("ChatwootCog is ready")
 
     @commands.Cog.listener()
@@ -26,7 +26,7 @@ class chatwoot(commands.Cog):
             return
 
         # Example: Fetching chat data from Chatwoot
-        chats = self.chatwoot_client.chats.list()  # Modify this according to actual API endpoint
+        chats = self.AsyncChatwoot.chats.list()  # Modify this according to actual API endpoint
         for chat in chats:
             if chat['status'] == 'open':
                 await self.create_chat_channel(chat)
@@ -70,7 +70,7 @@ class chatwoot(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        conversations = self.chatwoot_client.conversations
+        conversations = self.AsyncChatwoot.conversations
         all_conversations = conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
