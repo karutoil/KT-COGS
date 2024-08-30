@@ -3,6 +3,7 @@
         "karutoil"
     ],
     "description": "Chatwoot API wrapper",
+    "name": "chatwootapi",
     "install_msg": "TBH",
     "short": "Chatwoot API wrapper",
     "permissions": [

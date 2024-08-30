@@ -3,6 +3,7 @@
         "karutoil"
     ],
     "description": "Chatwoot DB wrapper",
+    "name": "chatwootdb",
     "install_msg": "TBH",
     "short": "Chatwoot DB wrapper",
     "permissions": [
