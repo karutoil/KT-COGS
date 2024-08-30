@@ -22,6 +22,7 @@ class chatwoot(commands.Cog):
         await self.config.chatwoot_url.set(chatwoot_url)
         await ctx.send("Chatwoot URL set.")
 
+    # Check for new chats on Chatwoot and create a channel with the chat ID.
     @commands.command()
     async def check_new_chats(self, ctx):
         """Check for new chats on Chatwoot and create a channel with the chat ID."""
@@ -57,7 +58,7 @@ class chatwoot(commands.Cog):
                         await ctx.send(f"Channel '{conv['id']}' created.")
                 await ctx.send(f"New chats found and {len(new_conversations)} channels created.")
             else:
-                await ctx.send("No new chats found. Last seen chat ID: " + str(last_seen_chat_id))
+                await ctx.send(f"No new chats found. Last seen chat ID: {last_seen_chat_id}")
         else:
             await ctx.send(f"Error fetching data from Chatwoot: {response.status_code}")
             await ctx.send(f"Response: {response.text}")
