@@ -11,7 +11,6 @@ class chatwoot(commands.Cog):
             chatwoot_url="",
             channel_category_id=0
         )
-        self.chatwoot_client = None
 
     @commands.Cog.listener()
     async def on_ready(self):
