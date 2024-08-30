@@ -1,0 +1,21 @@
+{
+    "author": [
+        "karutoil"
+    ],
+    "description": "Chatwoot DB wrapper",
+    "install_msg": "TBH",
+    "short": "Chatwoot DB wrapper",
+    "permissions": [
+        "send_messages",
+        "create_channels"
+    ],
+    "requirements": [
+        "asyncpg"
+    ],
+    "end_user_data_statement": "Sucks for you",
+    "tags": [
+        "chat",
+        "chatwoot"
+    ],
+    "min_bot_version": "3.5.0"
+}
