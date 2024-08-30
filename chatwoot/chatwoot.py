@@ -7,12 +7,11 @@ class chatwoot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
-        self.config.register_global(
-            chatwoot_api_key="",
-            chatwoot_url="",
-            channel_category_id=0
-        )
-        self.chatwoot_client = None
+#        self.config.register_global(
+#            chatwoot_api_key="",
+#            chatwoot_url="",
+#            channel_category_id=0
+#        )
         self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
 
     async def poll_chatwoot(self):
