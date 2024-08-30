@@ -11,9 +11,7 @@
         "create_channels"
     ],
     "requirements": [
-        "asyncpg",
-        "asyncio",
-        "psycopg2"
+        "asyncpg"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [
