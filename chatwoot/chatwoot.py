@@ -22,8 +22,8 @@ class chatwoot(commands.Cog):
         await self.config.chatwoot_url.set(chatwoot_url)
         await ctx.send("Chatwoot URL set.")
 
-        @commands.command()
-        async def check_new_chats(self, ctx):
+    @commands.command()
+    async def check_new_chats(self, ctx):
             """Check for new chats on Chatwoot and create a channel with the chat ID."""
             api_key = await self.config.chatwoot_api_key()
             account_id = await self.config.chatwoot_account_id()
