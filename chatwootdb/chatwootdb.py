@@ -33,13 +33,14 @@ class chatwootdb(commands.Cog):
 
     async def cog_load(self):
         super().cog_load()
-        loop = asyncio.get_event_loop()
-        self._query_task = loop.create_task(self._query_every_15_seconds())
-
+        if not hasattr(self, '_query_task'):
+            loop = asyncio.get_event_loop()
+            self._query_task = loop.create_task(self.query_every_15_seconds())
+            
     async def cog_unload(self):
-        self._query_task.cancel()
         await self._query_task
         self.pools.clear()
+        delattr(self, '_query_task')  # Clearing the task to avoid circular reference when garbage collecting
 
     async def get_channel_id(self, guild) -> str:
         pool = await self.get_pool(guild.id)
