@@ -2,22 +2,23 @@ import discord
 from redbot.core import commands, Config
 from woot import Chatwoot, AsyncChatwoot
 
-class chatwoot(commands.Cog):
+class ChatwootCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
         self.config.register_global(
             chatwoot_api_key="",
-            chatwoot_url="",
+            chatwoot_base_url="",
             channel_category_id=0
         )
+        self.chatwoot_client = None
 
     @commands.Cog.listener()
     async def on_ready(self):
         # Initialize the Chatwoot client
         api_key = await self.config.chatwoot_api_key()
-        base_url = await self.config.chatwoot_url()
-        self.AsyncChatwoot = AsyncChatwoot(api_key, base_url)
+        base_url = await self.config.chatwoot_base_url()
+        self.chatwoot_client = ChatwootClient(api_key, base_url)
         print("ChatwootCog is ready")
 
     @commands.Cog.listener()
@@ -26,14 +27,14 @@ class chatwoot(commands.Cog):
             return
 
         # Example: Fetching chat data from Chatwoot
-        chats = self.AsyncChatwoot.chats.list()  # Modify this according to actual API endpoint
+        chats = self.chatwoot_client.chats.list()  # Modify this according to actual API endpoint
         for chat in chats:
             if chat['status'] == 'open':
                 await self.create_chat_channel(chat)
 
     async def create_chat_channel(self, chat):
         category_id = await self.config.channel_category_id()
-        category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
+        category = discord.utils.get(self.bot.get_guild(YOUR_GUILD_ID).categories, id=category_id)
         
         if category is None:
             print(f"Category with ID {category_id} not found.")
@@ -62,7 +63,7 @@ class chatwoot(commands.Cog):
     async def set_chatwoot_config(self, ctx, api_key: str, base_url: str, category_id: int):
         """Command to set Chatwoot configuration"""
         await self.config.chatwoot_api_key.set(api_key)
-        await self.config.chatwoot_url.set(base_url)
+        await self.config.chatwoot_base_url.set(base_url)
         await self.config.channel_category_id.set(category_id)
         await ctx.send("Chatwoot configuration updated!")
 
@@ -70,9 +71,9 @@ class chatwoot(commands.Cog):
     @commands.is_owner()
     async def test_chatwoot(self, ctx):
         """Command to test the Chatwoot integration"""
-        conversations = self.AsyncChatwoot.conversations
+        conversations = AsyncChatwoot.conversations
         all_conversations = conversations.list(account_id=1)
         await ctx.send(f"Fetched {len(all_conversations)} chats from Chatwoot.")
 
 def setup(bot):
-    bot.add_cog(chatwoot(bot))
+    bot.add_cog(ChatwootCog(bot))
