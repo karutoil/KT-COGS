@@ -19,6 +19,7 @@ class chatwootdb(commands.Cog):
         )
         self.pools = {}  # Dictionary to hold connection pools per server
         self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
+        print("test")
         
     async def cog_unload(self):
         if self.bg_task:
