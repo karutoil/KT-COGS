@@ -18,7 +18,6 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
-        self.task = None  # Task to run the check_new_chats function
         self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
 
     async def poll_chatwoot(self):
@@ -30,12 +29,9 @@ class chatwootdb(commands.Cog):
                 print(f"Error while polling Chatwoot: {e}")
             await asyncio.sleep(15)  # Poll every 15 seconds
 
-    async def cog_load(self):
-        self.task = asyncio.create_task(self.check_new_chats())
-
     async def cog_unload(self):
-        if self.task:
-            self.task.cancel()
+        if self.bg_task:
+            self.bg_task.cancel()
         for pool in self.pools.values():
             await pool.close()
 
@@ -52,7 +48,8 @@ class chatwootdb(commands.Cog):
         return self.pools[guild_id]
 
     async def check_new_chats(self):
-            for guild_id in self.pools:
+        for guild_id in self.pools:
+            try:
                 pool = await self.get_pool(guild_id)
                 async with pool.acquire() as connection:
                     result = await connection.fetch("SELECT * FROM public.conversations WHERE created_at > NOW() - INTERVAL '20 seconds'")
@@ -63,6 +60,8 @@ class chatwootdb(commands.Cog):
                                 await self.create_chat_channel(guild, record['id'])
                         else:
                             print(f"Guild with ID {guild_id} not found")
+            except Exception as e:
+                print(f"Error while checking new chats for guild {guild_id}: {e}")
 
     async def create_chat_channel(self, guild, chat_id):
         category_id = 1093031434974937128
