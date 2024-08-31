@@ -75,10 +75,10 @@ class chatwootdb(commands.Cog):
             return
 
         channel_name = f"Chat - {chat_id}"
-        existing_channel = discord.utils.get(category.text_channels, name=channel_name)
-        if existing_channel:
-            print(f"Channel {channel_name} already exists")
-            return
+#        existing_channel = discord.utils.get(category.text_channels, name=channel_name)
+#        if existing_channel:
+#            print(f"Channel {channel_name} already exists")
+#            return
 
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
