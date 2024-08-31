@@ -49,8 +49,12 @@ class chatwootdb(commands.Cog):
                 async with pool.acquire() as connection:
                     result = await connection.fetch("SELECT * FROM public.conversations WHERE created_at > NOW() - INTERVAL '20 seconds'")
                     if result:
-                        for record in result:
-                            await self.create_chat_channel(self.bot.get_guild(guild_id), record['id'])
+                        guild = self.bot.get_guild(guild_id)
+                        if guild:
+                            for record in result:
+                                await self.create_chat_channel(guild, record['id'])
+                        else:
+                            print(f"Guild with ID {guild_id} not found")
             await asyncio.sleep(15)
 
     async def create_chat_channel(self, guild, chat_id):
@@ -69,8 +73,13 @@ class chatwootdb(commands.Cog):
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
         }
-        await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
-        print(f"Created channel {channel_name}")
+        try:
+            await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
+            print(f"Created channel {channel_name}")
+        except discord.Forbidden:
+            print(f"Failed to create channel {channel_name}: Missing permissions")
+        except discord.HTTPException as e:
+            print(f"Failed to create channel {channel_name}: {e}")
 
     @commands.group(name='db')
     @commands.guild_only()
