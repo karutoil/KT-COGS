@@ -3,7 +3,7 @@ from redbot.core import commands, checks, Config
 import asyncio
 import psycopg2
 
-class ConversationCog(commands.Cog):
+class chatwootdb(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
@@ -55,4 +55,4 @@ class ConversationCog(commands.Cog):
         await ctx.send("Database configuration updated.")
 
 def setup(bot):
-    bot.add_cog(ConversationCog(bot))
+    bot.add_cog(chatwootdb(bot))
