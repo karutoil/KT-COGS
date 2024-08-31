@@ -63,8 +63,13 @@ class chatwootdb(commands.Cog):
         
         if result:
             result_str = '\n'.join([str(record) for record in result])
-            for i in range(0, len(result_str), 4000):
-                await ctx.send(f"Query result:\n{result_str[i:i+4000]}")
+            if len(result_str) > 4000:
+                # Split the result into chunks of 4000 characters
+                chunks = [result_str[i:i+4000] for i in range(0, len(result_str), 4000)]
+                for chunk in chunks:
+                    await ctx.send(f"Query result:\n{chunk}")
+            else:
+                await ctx.send(f"Query result:\n{result_str}")
         else:
             await ctx.send("No results found.")
 
