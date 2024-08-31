@@ -56,6 +56,7 @@ class chatwootdb(commands.Cog):
                 pool = await self.get_pool(guild_id)
                 async with pool.acquire() as connection:
                     result = await connection.fetch("SELECT * FROM public.conversations WHERE created_at > NOW() - INTERVAL '20 seconds'")
+                    print(result)
                     if result:
                         guild = self.bot.get_guild(guild_id)
                         if guild:
