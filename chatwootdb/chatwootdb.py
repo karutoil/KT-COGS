@@ -1,6 +1,8 @@
+import asyncio
 import asyncpg
 from redbot.core import commands, Config
 from redbot.core.i18n import Translator
+import discord
 
 _ = Translator("chatwootdb", __file__)
 
@@ -16,11 +18,14 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
+        self.task = None  # Task to run the check_new_chats function
 
     async def cog_load(self):
-        pass  # No need to initialize pools here
+        self.task = asyncio.create_task(self.check_new_chats())
 
     async def cog_unload(self):
+        if self.task:
+            self.task.cancel()
         for pool in self.pools.values():
             await pool.close()
 
@@ -35,6 +40,37 @@ class chatwootdb(commands.Cog):
                 port=config['db_port']
             )
         return self.pools[guild_id]
+
+    async def check_new_chats(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            for guild_id in self.pools:
+                pool = await self.get_pool(guild_id)
+                async with pool.acquire() as connection:
+                    result = await connection.fetch("SELECT * FROM public.conversations WHERE created_at > NOW() - INTERVAL '15 seconds'")
+                    if result:
+                        for record in result:
+                            await self.create_chat_channel(self.bot.get_guild(guild_id), record['id'])
+            await asyncio.sleep(15)
+
+    async def create_chat_channel(self, guild, chat_id):
+        category_id = 1093031434974937128
+        category = discord.utils.get(guild.categories, id=category_id)
+        if not category:
+            print(f"Category with ID {category_id} not found in guild {guild.name}")
+            return
+
+        channel_name = f"Chat - {chat_id}"
+        existing_channel = discord.utils.get(category.text_channels, name=channel_name)
+        if existing_channel:
+            print(f"Channel {channel_name} already exists")
+            return
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        }
+        await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
+        print(f"Created channel {channel_name}")
 
     @commands.group(name='db')
     @commands.guild_only()
@@ -63,13 +99,7 @@ class chatwootdb(commands.Cog):
         
         if result:
             result_str = '\n'.join([str(record) for record in result])
-            if len(result_str) > 4000:
-                # Split the result into chunks of 4000 characters
-                chunks = [result_str[i:i+4000] for i in range(0, len(result_str), 4000)]
-                for chunk in chunks:
-                    await ctx.send(f"Query result:\n{chunk}")
-            else:
-                await ctx.send(f"Query result:\n{result_str}")
+            await ctx.send(f"Query result:\n{result_str}")
         else:
             await ctx.send("No results found.")
 
