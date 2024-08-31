@@ -11,8 +11,9 @@
         "create_channels"
     ],
     "requirements": [
-        "asyncpg",
-        "asyncio"
+        "discord.py",
+        "asyncio",
+        "psycopg2-binary"
     ],
     "end_user_data_statement": "Sucks for you",
     "tags": [

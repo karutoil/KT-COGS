@@ -1,143 +1,58 @@
-import asyncio
-import asyncpg
-from redbot.core import commands, Config
-from redbot.core.i18n import Translator
 import discord
+from redbot.core import commands, checks, Config
+import asyncio
+import psycopg2
 
-_ = Translator("chatwootdb", __file__)
-
-class chatwootdb(commands.Cog):
+class ConversationCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=123456789)  # Unique identifier for your cog
-        self.config.register_guild(
-            db_user=None,
-            db_password=None,
-            db_name=None,
-            db_host=None,
-            db_port=5432
+        self.config = Config.get_conf(self, identifier=1234567890)
+        self.config.register_global(
+            db_host="localhost",
+            db_name="your_database",
+            db_user="your_username",
+            db_password="your_password"
         )
-        self.pools = {}  # Dictionary to hold connection pools per server
-        self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
-        print("test")
-        
-    async def cog_unload(self):
-        if self.bg_task:
-            self.bg_task.cancel()
-        for pool in self.pools.values():
-            await pool.close()
-        print("ChatwootDB cog unloaded")
+        self.category_id = 1093031434974937128
+        self.check_interval = 15  # seconds
+        self.bot.loop.create_task(self.check_new_conversation())
 
-    async def poll_chatwoot(self):
+    async def check_new_conversation(self):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             try:
-                await self.check_new_chats()
+                db_config = await self.config.all()
+                conn = psycopg2.connect(
+                    host=db_config['db_host'],
+                    database=db_config['db_name'],
+                    user=db_config['db_user'],
+                    password=db_config['db_password']
+                )
+                cur = conn.cursor()
+                cur.execute("SELECT MAX(id) FROM public.conversation")
+                newest_id = cur.fetchone()[0]
+                cur.close()
+                conn.close()
+
+                if newest_id is not None:
+                    guild = discord.utils.get(self.bot.guilds, id=YOUR_GUILD_ID)
+                    category = discord.utils.get(guild.categories, id=self.category_id)
+                    channel_name = f"Chat - {newest_id}"
+                    if not discord.utils.get(category.text_channels, name=channel_name):
+                        await category.create_text_channel(channel_name)
             except Exception as e:
-                print(f"Error while polling Chatwoot: {e}")
-            await asyncio.sleep(15)  # Poll every 15 seconds
-        print("ChatwootDB poller")
+                print(f"Error checking new conversation: {e}")
+            finally:
+                await asyncio.sleep(self.check_interval)
 
-    async def get_pool(self, guild_id):
-        if guild_id not in self.pools:
-            config = await self.config.guild_from_id(guild_id).all()
-            self.pools[guild_id] = await asyncpg.create_pool(
-                user=config['db_user'],
-                password=config['db_password'],
-                database=config['db_name'],
-                host=config['db_host'],
-                port=config['db_port']
-            )
-        return self.pools[guild_id]
-
-    async def check_new_chats(self):
-        for guild_id in self.pools:
-            try:
-                pool = await self.get_pool(guild_id)
-                async with pool.acquire() as connection:
-                    result = await connection.fetch("SELECT * FROM public.conversations WHERE created_at > NOW() - INTERVAL '20 seconds'")
-                    print(result)
-                    if result:
-                        guild = self.bot.get_guild(guild_id)
-                        if guild:
-                            for record in result:
-                                await self.create_chat_channel(guild, record['id'])
-                        else:
-                            print(f"Guild with ID {guild_id} not found")
-            except Exception as e:
-                print(f"Error while checking new chats for guild {guild_id}: {e}")
-
-    async def create_chat_channel(self, guild, chat_id):
-        category_id = 1093031434974937128
-        category = discord.utils.get(self.bot.get_guild(1093028183982473258).categories, id=category_id)
-
-        if category is None:
-            print(f"Category with ID {category_id} not found.")
-            return
-
-        channel_name = f"Chat - {chat_id}"
-#        existing_channel = discord.utils.get(category.text_channels, name=channel_name)
-#        if existing_channel:
-#            print(f"Channel {channel_name} already exists")
-#            return
-
-        overwrites = {
-            guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)
-        }
-        try:
-            await guild.create_text_channel(channel_name, category=category, overwrites=overwrites)
-            print(f"Created channel {channel_name}")
-        except discord.Forbidden:
-            print(f"Failed to create channel {channel_name}: Missing permissions")
-        except discord.HTTPException as e:
-            print(f"Failed to create channel {channel_name}: {e}")
-
-    @commands.group(name='db')
-    @commands.guild_only()
-    async def db(self, ctx):
-        """Database management commands"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help()
-
-    @db.command(name='setconfig')
-    @commands.has_permissions(administrator=True)
-    async def set_config(self, ctx, user: str, password: str, database: str, host: str, port: int = 5432):
-        """Sets the database configuration for this server"""
-        await self.config.guild(ctx.guild).db_user.set(user)
-        await self.config.guild(ctx.guild).db_password.set(password)
-        await self.config.guild(ctx.guild).db_name.set(database)
-        await self.config.guild(ctx.guild).db_host.set(host)
-        await self.config.guild(ctx.guild).db_port.set(port)
+    @commands.command()
+    @checks.is_owner()
+    async def setdb(self, ctx, host: str, db_name: str, user: str, password: str):
+        await self.config.db_host.set(host)
+        await self.config.db_name.set(db_name)
+        await self.config.db_user.set(user)
+        await self.config.db_password.set(password)
         await ctx.send("Database configuration updated.")
 
-    @db.command(name='query')
-    async def query_db(self, ctx, *, query: str):
-        """Executes a query on the configured database"""
-        pool = await self.get_pool(ctx.guild.id)
-        async with pool.acquire() as connection:
-            result = await connection.fetch(query)
-        
-        if result:
-            result_str = '\n'.join([str(record) for record in result])
-            await ctx.send(f"Query result:\n{result_str}")
-        else:
-            await ctx.send("No results found.")
-
-    @db.command(name='insert')
-    async def insert_db(self, ctx, *, query: str):
-        """Inserts data into the configured database"""
-        pool = await self.get_pool(ctx.guild.id)
-        async with pool.acquire() as connection:
-            await connection.execute(query)
-        
-        await ctx.send("Data inserted successfully.")
-
-    @db.command(name='ts')
-    async def ts(self, ctx):
-        """Tests check"""
-        await self.bot.loop.create_task(self.poll_chatwoot())
-        
-        await ctx.send("Command ran.")
-
 def setup(bot):
-    bot.add_cog(chatwootdb(bot))
+    bot.add_cog(ConversationCog(bot))
