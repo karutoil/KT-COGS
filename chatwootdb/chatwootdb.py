@@ -18,7 +18,16 @@ class chatwootdb(commands.Cog):
             db_port=5432
         )
         self.pools = {}  # Dictionary to hold connection pools per server
+        self.bg_task = None  # Task to run the check_new_chats function
+
+    async def cog_load(self):
         self.bg_task = self.bot.loop.create_task(self.poll_chatwoot())
+
+    async def cog_unload(self):
+        if self.bg_task:
+            self.bg_task.cancel()
+        for pool in self.pools.values():
+            await pool.close()
 
     async def poll_chatwoot(self):
         await self.bot.wait_until_ready()
@@ -28,12 +37,6 @@ class chatwootdb(commands.Cog):
             except Exception as e:
                 print(f"Error while polling Chatwoot: {e}")
             await asyncio.sleep(15)  # Poll every 15 seconds
-
-    async def cog_unload(self):
-        if self.bg_task:
-            self.bg_task.cancel()
-        for pool in self.pools.values():
-            await pool.close()
 
     async def get_pool(self, guild_id):
         if guild_id not in self.pools:
