@@ -132,7 +132,7 @@ class chatwootdb(commands.Cog):
         await ctx.send("Data inserted successfully.")
 
     @db.command(name='ts')
-    async def ts(self, ctx, *, query: str):
+    async def ts(self, ctx):
         """Tests check"""
         await self.bot.loop.create_task(self.poll_chatwoot())
         
