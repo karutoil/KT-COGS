@@ -63,7 +63,8 @@ class chatwootdb(commands.Cog):
         
         if result:
             result_str = '\n'.join([str(record) for record in result])
-            await ctx.send(f"Query result:\n{result_str}")
+            for i in range(0, len(result_str), 4000):
+                await ctx.send(f"Query result:\n{result_str[i:i+4000]}")
         else:
             await ctx.send("No results found.")
 
@@ -75,23 +76,6 @@ class chatwootdb(commands.Cog):
             await connection.execute(query)
         
         await ctx.send("Data inserted successfully.")
-
-    @db.command(name='query_conversation')
-    async def query_conversation(self, ctx):
-        """Queries the conversation table and posts the result to a Discord channel"""
-        pool = await self.get_pool(ctx.guild.id)
-        async with pool.acquire() as connection:
-            result = await connection.fetch("SELECT * FROM public.conversation")
-        
-        if result:
-            result_str = '\n'.join([str(record) for record in result])
-            channel = self.bot.get_channel(1273713255193251941)
-            if channel:
-                await channel.send(f"Query result:\n{result_str}")
-            else:
-                await ctx.send("Could not find the specified channel.")
-        else:
-            await ctx.send("No results found.")
 
 def setup(bot):
     bot.add_cog(chatwootdb(bot))
