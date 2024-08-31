@@ -35,7 +35,7 @@ class chatwootdb(commands.Cog):
                 conn.close()
 
                 if newest_id is not None:
-                    guild = discord.utils.get(self.bot.guilds, id=YOUR_GUILD_ID)
+                    guild = discord.utils.get(self.bot.guilds, id=1093028183982473258)
                     category = discord.utils.get(guild.categories, id=self.category_id)
                     channel_name = f"Chat - {newest_id}"
                     if not discord.utils.get(category.text_channels, name=channel_name):
