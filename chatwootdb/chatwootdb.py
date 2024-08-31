@@ -52,8 +52,6 @@ class chatwootdb(commands.Cog):
         return self.pools[guild_id]
 
     async def check_new_chats(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
             for guild_id in self.pools:
                 pool = await self.get_pool(guild_id)
                 async with pool.acquire() as connection:
